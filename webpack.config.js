@@ -29,12 +29,23 @@ module.exports = {
         chunkFilename: '[id].[chunkhash].js'
     },
 
-    // 其他解决方案
+    // 其他解决方案:详细说明: https://www.cnblogs.com/joyco773/p/9049760.html
     resolve: {
         // require时省略的扩展名，遇到.vue结尾的也要去加载
-        extensions: ['','.js', '.vue'],
+        extensions: ['.js', '.vue', ''],
         // 模块别名地址，方便后续直接引用别名，无须写长长的地址，注意如果后续不能识别该别名，需要先设置root
-        alias:{}
+        alias:{
+            "@":"./src/"
+        },
+        /*
+        配置 Webpack 去哪些目录下寻找第三方模块，默认是只会去  node_modules  目录下寻找。 
+        有时你的项目里会有一些模块会大量被其它模块依赖和导入，由于其它模块的位置分布不定，
+        针对不同的文件都要去计算被导入模块文件的相对路径， 这个路径有时候会很长，就像这样  import '../../../components/button'  
+        这时你可以利用  modules  配置项优化，假如那些被大量导入的模块都在  ./src/components  目录下，把  modules  配置成
+        modules:['./src/components','node_modules']
+        后，你可以简单通过  import 'button'  导入。
+        */ 
+        modules:['./src/components','node_modules']
     },    
 
     // 不进行打包的模块
