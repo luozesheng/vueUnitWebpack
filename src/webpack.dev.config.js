@@ -137,7 +137,7 @@ config.devtool='cheap-module-eval-source-map';
 // 为了实现热加载，需要动态向入口配置中注入 webpack-hot-middleware/client ，路径相对于本文件所在的位置
 // var devClient = 'webpack-hot-middleware/client';
 // 为了修改html文件也能实现热加载，需要修改上面的devClient变量，引入同级目录下的dev-client.js文件
-var devClient = './build/dev-client';
+var devClient = './dev-client';
 // Object.keys()返回对象的可枚举属性和方法的名称
 Object.keys(config.entry).forEach(function (name, i) {
     var extras = [devClient];
