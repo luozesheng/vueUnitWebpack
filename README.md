@@ -1,12 +1,9 @@
-# vueUnitWebpack
-基于Iview开发独立的Vue模块，能够作为独立的服务，也能作为模块，引入业务模块，作为插件调用,参考iview的message等组件
-#
-https://www.cnblogs.com/brandonhulala/p/6057378.html
-  插件注释
-    (1) autoprefixer-loader: 打包后自动补充浏览器的兼容性前缀和后缀（比如flexbox布局中的前后缀-webkit,-mos等）
-    
-    (2)extract-text-webpack-plugin:
-    主要是为了抽离css样式,防止将样式打包在js中引起页面样式加载错乱的现象。
-    详细参考：https://blog.csdn.net/u010982507/article/details/81337529
 
-#https://www.cnblogs.com/brandonhulala/p/6057378.html
+项目要求
+1.高兼容性：ie9+，chrome19+浏览器
+
+
+
+#webpaack打包部署：
+1.在启动服务时，若是修改了文件，会进行全局更新，现需要配置，实现局部更新
+2.修改代码后，需要手动刷新才会展示修改内容（less,vue）

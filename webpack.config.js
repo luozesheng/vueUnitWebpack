@@ -1,112 +1,159 @@
-// 引入依赖模块
-var path = require('path');
-var webpack = require('webpack');
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
-
-module.exports = {
-    // 入口文件，路径相对于本文件所在的位置，可以写成字符串、数组、对象
-    entry: {
-        // path.resolve([from ...], to) 将to参数解析为绝对路径
-        index:path.resolve(__dirname, '../src/main.js'),
-        // 需要被提取为公共模块的群组
-        vendors:['vue','vue-router','vuex'],
-    },
-
-    // 输出配置
+const path = require('path');
+const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin')
+const webpack = require('webpack')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+// webpack构建的vue项目中，需要配置改loader的插件库
+// 具体解释：https://www.cnblogs.com/eret9616/p/11802889.html
+const VueLoaderPlugin = require('vue-loader/lib/plugin');
+// 将CSS提取为独立的文件的插件，对每个包含css的js文件都会创建一个CSS文件，支持按需加载css和sourceMap
+// https://www.jianshu.com/p/91e60af11cc9
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const {CleanWebpackPlugin} = require('clean-webpack-plugin'); //引入清除文件插件
+//  插件可以测量各个插件和loader所花费的时间，使用之后，构建时会展示编译时间
+const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
+const smp = new SpeedMeasurePlugin();
+// 首次构建时间没有太大变化，但是第二次开始，构建时间大约可以节约 80%。
+var HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+const HOST = 'localhost'
+const PORT = 3006
+const HTTPS = false
+let config = {
+    mode: "development",
+    // JS 执行入口文件
+    entry: __dirname + '/src/main.js',
     output: {
-        // 输出文件，路径相对于本文件所在的位置
-        path: path.resolve(__dirname, '../output/static/js/'),
-
-        // 设置publicPath这个属性会出现很多问题：
-        // 1.可以看成输出文件的另一种路径，差别路径是相对于生成的html文件；
-        // 2.也可以看成网站运行时的访问路径；
-        // 3.该属性的好处在于当你配置了图片CDN的地址，本地开发时引用本地的图片资源，上线打包时就将资源全部指向CDN了，如果没有确定的发布地址不建议配置该属性，特别是在打包图片时，路径很容易出现混乱，如果没有设置，则默认从站点根目录加载
-        // publicPath: '../static/js/',
-
-        // 基于文件的md5生成Hash名称的script来防止缓存
-        filename: '[name].[hash].js',
-        // 非主入口的文件名，即未被列在entry中，却又需要被打包出来的文件命名配置
-        chunkFilename: '[id].[chunkhash].js'
+        // filename:"bundle.js",
+        // 把所有依赖的模块合并输出到一个 bundle.js 文件
+        filename: "[name].[hash:8].js", // 用于长效缓存
+        // 输出文件都放到 dist 目录下
+        path: path.join(__dirname, 'dist'),
+        hotUpdateChunkFilename: 'hot/hot-update.js',
+        hotUpdateMainFilename: 'hot/hot-update.json'
     },
-
-    // 其他解决方案:详细说明: https://www.cnblogs.com/joyco773/p/9049760.html
-    resolve: {
-        // require时省略的扩展名，遇到.vue结尾的也要去加载
-        extensions: ['.js', '.vue', ''],
-        // 模块别名地址，方便后续直接引用别名，无须写长长的地址，注意如果后续不能识别该别名，需要先设置root
-        alias:{
-            "@":"./src/"
-        },
-        /*
-        配置 Webpack 去哪些目录下寻找第三方模块，默认是只会去  node_modules  目录下寻找。 
-        有时你的项目里会有一些模块会大量被其它模块依赖和导入，由于其它模块的位置分布不定，
-        针对不同的文件都要去计算被导入模块文件的相对路径， 这个路径有时候会很长，就像这样  import '../../../components/button'  
-        这时你可以利用  modules  配置项优化，假如那些被大量导入的模块都在  ./src/components  目录下，把  modules  配置成
-        modules:['./src/components','node_modules']
-        后，你可以简单通过  import 'button'  导入。
-        */ 
-        modules:['./src/components','node_modules']
-    },    
-
-    // 不进行打包的模块
-    externals:{},
-
-    // 模块加载器
     module: {
-        // loader相当于gulp里的task，用来处理在入口文件中require的和其他方式引用进来的文件，test是正则表达式，匹配要处理的文件；loader匹配要使用的loader，"-loader"可以省略；include把要处理的目录包括进来，exclude排除不处理的目录       
-        loaders: [
-            //  使用vue-loader 加载 .vue 结尾的文件
+        rules: [
             {
-                test: /\.vue$/, 
-                loader: 'vue-loader',
-                exclude: /node_modules/    
-            },
-            // 使用babel 加载 .js 结尾的文件
-            {
-                test: /\.js$/,
-                loader: 'babel',
-                exclude: /node_modules/,
-                query:{
-                    presets: ['es2015', 'stage-0'],  
-                    plugins: ['transform-runtime']                      
-                }
-            }, 
-            // 使用css-loader和style-loader 加载 .css 结尾的文件
-            {  
-                test: /\.css$/,                  
-                // 将样式抽取出来为独立的文件
-                loader: ExtractTextPlugin.extract("style-loader", "css-loader!autoprefixer-loader"),
-                exclude: /node_modules/
-            },         
-            // 加载图片
-            {
-                test: /\.(png|jpg|gif)$/,
-                loader: 'url-loader',
-                query: {
-                    // 把较小的图片转换成base64的字符串内嵌在生成的js文件里
-                    limit: 10000,
-                    // 路径要与当前配置文件下的publicPath相结合
-                    name:'../img/[name].[ext]?[hash:7]'
-                }
-            },
-            // 加载图标
-            {
-                test: /\.(eot|woff|woff2|svg|ttf)([\?]?.*)$/,
-                loader: 'file-loader',
-                query: {               
-                    // 把较小的图标转换成base64的字符串内嵌在生成的js文件里    
-                    limit: 10000,
-                    name:'../fonts/[name].[ext]?[hash:7]',
-                    prefix:'font'
-                }
+                test: /\.vue$/,
+                use: ['thread-loader', 'vue-loader'],
+                include: [path.resolve(__dirname, 'src')]
             },
             {
-                test: /\.scss$/,
-                loaders: ["style", "css", "sass"]
-            },          
-        ]         
+                test: /.css$/,
+                use: [
+                    // MiniCssExtractPlugin.loader,
+                    {loader: 'style-loader'},
+                    {loader: 'css-loader'}
+                ]
+            },
+            {
+                test: /.less$/,       // less-loader 用于解析 less
+                use: [
+                    {
+                        loader: "thread-loader"
+                    },
+                    {
+                        loader: 'style-loader',
+                        // options: {
+                        //     insertAt: 'top', // 将样式插入到 <head>
+                        //     singleton: 'true' // 将所有的 style 标签合成一个
+                        // }
+                    },
+                    {loader: 'css-loader'},
+                    {loader: 'less-loader'},
+                    {
+                        loader: 'postcss-loader',
+                        options:{
+                            plugins: () => [
+                                require('autoprefixer')({
+                                    browsers:[
+                                        'last 5 version',
+                                        '>1%', 
+                                        'ios 7'
+                                    ]
+                                })
+                            ]
+                        }
+                    },
+                ]
+            },
+            // {
+            //     test:/\.(vue|less)$/,
+            //     loader:'webpack-px2rem-loader',
+            //     // 这个配置是可选的
+            //      query:{
+            //         // 1rem=npx 默认为 10
+            //         basePx:75,
+            //         // 只会转换大于min的px 默认为0
+            //         // 因为很小的px（比如border的1px）转换为rem后在很小的设备上结果会小于1px，有的设备就会不显示
+            //         min:1,
+            //         // 转换后的rem值保留的小数点后位数 默认为3
+            //         floatWidth:3
+            //     }
+ 
+            // }
+        ]
     },
+    plugins: [
+        new HardSourceWebpackPlugin({
+            // cacheDirectory是在高速缓存写入。默认情况下，将缓存存储在node_modules下的目录中，因此如 
+            // 果清除了node_modules，则缓存也是如此
+            cacheDirectory: 'node_modules/.cache/hard-source/[confighash]',
+            // Either an absolute path or relative to webpack's options.context.
+            // Sets webpack's recordsPath if not already set.
+            recordsPath: 'node_modules/.cache/hard-source/[confighash]/records.json',
+            // configHash在启动webpack实例时转换webpack配置，并用于cacheDirectory为不同的webpack配 
+            // 置构建不同的缓存
+            configHash: function(webpackConfig) {
+               // node-object-hash on npm can be used to build this.
+               return require('node-object-hash')({sort: false}).hash(webpackConfig);
+            },
+            // 当加载器，插件，其他构建时脚本或其他动态依赖项发生更改时，hard-source需要替换缓存以确保输 
+            // 出正确。environmentHash被用来确定这一点。如果散列与先前的构建不同，则将使用新的缓存
+            environmentHash: {
+               root: process.cwd(),
+               directories: [],
+               files: [],
+            },
+        }),
+        // new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+        // new CleanWebpackPlugin(), //引入清楚文件插件
+        new VueLoaderPlugin(),
+        new HtmlWebpackPlugin({
+            title: '模块热替换',
+            template: './public/index.html',
+            favicon: './src/assets/images/logo.png'
+        }),
+        // 热更新
+        new webpack.HotModuleReplacementPlugin(),
+        // 这种连结行为被称为“作用域提升(scope hoisting)”。
+        //    过去 webpack 打包时的一个取舍是将 bundle 中各个模块单独打包成闭包。这些打包函数使你的 
+        // JavaScript 在浏览器中处理的更慢。相比之下，一些工具像 Closure Compiler 和 RollupJS 
+        // 可以提升(hoist)或者预编译所有模块到一个闭包中，提升你的代码在浏览器中的执行速度。
+        new webpack.optimize.ModuleConcatenationPlugin(),
+        // 启动输出清理
+        new FriendlyErrorsWebpackPlugin({
+            compilationSuccessInfo: {
+                messages: [`You application is running here ${HTTPS ? 'https' : 'http'}://${HOST}:${PORT}`],
+                // notes: ['Some additional notes to be displayed upon successful compilation'],
+                clearConsole: true
+            },
+        })
+    ],
+    devServer: {
+        contentBase: __dirname,
+        quiet: true,
+        compress: true,
+        port: PORT,
+        host: HOST,
+        https: HTTPS,
+        // hot: true,
+        // hotOnly: true,
+        // inline: true,
+        open: true,
+        overlay: true,
+        openPage: './dist/index.html'
+    },
+    // devtool: 'source-map' // 输出 source-map 方便直接调试 ES6 源码
+};
 
-    // 配置插件项
-    plugins: []  
-}
+module.exports = smp.wrap(config);
