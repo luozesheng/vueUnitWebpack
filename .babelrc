@@ -1,0 +1,14 @@
+{
+  "presets": [
+    "env",
+    "@vue/app"
+  ],
+  "plugins":[
+  	"@babel/plugin-syntax-dynamic-import",
+  	["import", { 
+  		"libraryName": "ant-design-vue", 
+  		"libraryDirectory": "es", 
+  		"style": true
+  	}]
+  ]
+}
