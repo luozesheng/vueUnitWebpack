@@ -6,7 +6,7 @@
     "watch": "webpack -w",
     "dev": "webpack-dev-server --inline",
     "build": "start yarn dev && yarn watch",
-    "buildTest":"webpack --progress --hide-modules",
+    "buildTest": "webpack --progress --hide-modules",
     "clean": "rimraf ./dist && mkdir dist"
   },
   "dependencies": {
