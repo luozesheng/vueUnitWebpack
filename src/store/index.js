@@ -16,9 +16,10 @@ let mutations = {
 let actions = {
     getCommonMenuList({ commit }, payload) {
         console.log("111111111111212");
-        request.getCommonMenu(res => {
-            commit(types.COMMON_MENULIST, res);
-        }, payload.params);
+        console.log('妹子在家吗');
+        // request.getCommonMenu(res => {
+        //     commit(types.COMMON_MENULIST, res);
+        // }, payload.params);
     },
 }
 export default new Vuex.Store({
