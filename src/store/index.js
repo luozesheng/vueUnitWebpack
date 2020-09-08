@@ -15,7 +15,7 @@ let mutations = {
 };
 let actions = {
     getCommonMenuList({ commit }, payload) {
-        console.log("11111111111");
+        console.log("111111111111212");
         request.getCommonMenu(res => {
             commit(types.COMMON_MENULIST, res);
         }, payload.params);
